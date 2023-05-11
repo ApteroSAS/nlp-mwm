@@ -40,7 +40,7 @@ A demo repo based on [OpenAI GPT-3.5 Turbo API.](https://platform.openai.com/doc
    ```bash
     OPENAI_API_KEY=sk-xxx...
    ```
-3. Run the application, the local project runs on `http://localhost:3000/`
+3. Run the application, the local project runs on `http://localhost:80/`
    ```bash
     pnpm run dev
    ```
@@ -90,7 +90,7 @@ Environment variables refer to the documentation below. [Docker Hub address](htt
 
 **Direct run**
 ```bash
-docker run --name=chatgpt-demo -e OPENAI_API_KEY=YOUR_OPEN_API_KEY -p 3000:3000 -d ddiu8081/chatgpt-demo:latest
+docker run --name=chatgpt-demo -e OPENAI_API_KEY=YOUR_OPEN_API_KEY -p 80:80 -d ddiu8081/chatgpt-demo:latest
 ```
 `-e` define environment variables in the container.
 
@@ -104,8 +104,8 @@ services:
     image: ddiu8081/chatgpt-demo:latest
     container_name: chatgpt-demo
     restart: always
-    ports:
-      - '3000:3000'
+    expose:
+      - 80
     environment:
       - OPENAI_API_KEY=YOUR_OPEN_API_KEY
       # - HTTPS_PROXY=YOUR_HTTPS_PROXY

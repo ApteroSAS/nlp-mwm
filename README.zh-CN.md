@@ -36,7 +36,7 @@
    ```bash
     OPENAI_API_KEY=sk-xxx...
    ```
-3. 运行应用，本地项目运行在 `http://localhost:3000/`
+3. 运行应用，本地项目运行在 `http://localhost:80/`
    ```bash
     pnpm run dev
    ```
@@ -82,8 +82,8 @@
 部署之前请确认 `.env` 文件正常配置，环境变量参考下方文档, [Docker Hub address](https://hub.docker.com/r/ddiu8081/chatgpt-demo).
 
 **一键运行**
-```bash
-docker run --name=chatgpt-demo -e OPENAI_API_KEY=YOUR_OPEN_API_KEY -p 3000:3000 -d ddiu8081/chatgpt-demo:latest
+```bash0t-demo 
+docker run --name=chatgp-e OPENAI_API_KEY=YOUR_OPEN_API_KEY -p 80:80 -d ddiu8081/chatgpt-demo:latest
 ```
 `-e` 在容器中定义环境变量。
 
@@ -96,8 +96,8 @@ services:
     image: ddiu8081/chatgpt-demo:latest
     container_name: chatgpt-demo
     restart: always
-    ports:
-      - '3000:3000'
+    expose:
+      - 80
     environment:
       - OPENAI_API_KEY=YOUR_OPEN_API_KEY
       # - HTTPS_PROXY=YOUR_HTTPS_PROXY

@@ -13,6 +13,6 @@ COPY --from=builder /usr/src/dist ./dist
 COPY --from=builder /usr/src/hack ./
 COPY package.json pnpm-lock.yaml ./
 RUN pnpm install
-ENV HOST=0.0.0.0 PORT=3000 NODE_ENV=production
+ENV HOST=0.0.0.0 PORT=80 NODE_ENV=production
 EXPOSE $PORT
 CMD ["/bin/sh", "docker-entrypoint.sh"]

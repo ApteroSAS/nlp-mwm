@@ -2,11 +2,11 @@ version: '3'
 
 services:
   chatgpt-demo:
-    image: ddiu8081/chatgpt-demo:latest
-    container_name: chatgpt-demo
-    restart: always
-    ports:
-        - "3000:3000"
+    image: registry.aptero.co/aptero-chatgpt-demo:latest
+    container_name: aptero-chatgpt-demo
+    restart: unless-stopped
+    expose:
+      - "80"
     environment:
       - OPENAI_API_KEY=YOUR_OPENAI_API_KEY
       # - HTTPS_PROXY=YOUR_HTTPS_PROXY
@@ -15,4 +15,16 @@ services:
       # - PUBLIC_SECRET_KEY=YOUR_SECRET_KEY
       # - SITE_PASSWORD=YOUR_SITE_PASSWORD
       # - OPENAI_API_MODEL=YOUR_OPENAI_API_MODEL
+    networks:
+      webtraefik:
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.chatgptdemo.rule=Host(`meet.aptero.co`) && PathPrefix(`/service/chatgpt`)"
+      - "traefik.http.middlewares.chatgptdemo-stripprefix.stripprefix.prefixes=/service/chatgpt/"
+      - "traefik.http.routers.chatgptdemo.middlewares=chatgptdemo-stripprefix@docker,https-redirectscheme@file"
+      - "traefik.http.routers.chatgptdemo.entrypoints=websecure"
+      - "traefik.http.routers.chatgptdemo.tls=true"
 
+networks:
+  webtraefik:
+    external: true
