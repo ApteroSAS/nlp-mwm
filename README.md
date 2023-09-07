@@ -1,3 +1,20 @@
+
+
+## Path on the Armin server
+```
+/workspace/config/common/chatgpt/
+```
+## To publish:
+1. Run `docker/publish.bat` (remember to update the version before. You need to be logged in to the docker registry)
+2. Then run the following on the server:
+```
+./compose-update.sh
+```
+
+## Url of the sevice
+https://meet.aptero.co/service/chatgpt/
+
+---
 [![](https://cloud-upyun.ddiu.site/picture/2023/04/15/xAe0dY.png)](https://v2.chatgpt.ddiu.me)
 
 > We are working on V2 Version! Preview & more info on https://github.com/ddiu8081/chatgpt-demo/discussions/247.
