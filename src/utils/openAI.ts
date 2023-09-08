@@ -2,9 +2,10 @@ import { createParser } from 'eventsource-parser'
 import type { ParsedEvent, ReconnectInterval } from 'eventsource-parser'
 import type { ChatMessage } from '@/types'
 
-const model = import.meta.env.OPENAI_API_MODEL || 'gpt-3.5-turbo'
+// I modified the Payload so we can use a model based on the Query String
+const defModel = import.meta.env.OPENAI_API_MODEL || 'gpt-3.5-turbo'
 
-export const generatePayload = (apiKey: string, messages: ChatMessage[]): RequestInit & { dispatcher?: any } => ({
+export const generatePayload = (apiKey: string, messages: ChatMessage[], model = defModel): RequestInit & { dispatcher?: any } => ({
   headers: {
     'Content-Type': 'application/json',
     'Authorization': `Bearer ${apiKey}`,

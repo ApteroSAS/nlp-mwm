@@ -1,17 +1,28 @@
 ---
 import Logo from './ApteroLogo.astro'
 import Themetoggle from './Themetoggle.astro'
+import GetSticky from './SpecialPrompts.astro'
+import CustomGreetings from './CustomGreetings.astro'
 ---
 
-<header>
+<header id="header" style="font-family: 'Montserrat', sans-serif;">
   <div class="fb items-center">
-    <Logo />
-    <Themetoggle />
+    <GetSticky /> <!-- There used to be more content here so I'll leave it here just in case -->
   </div>
-  <div class="fi mt-2">
-    <span class="gpt-title">Hello ! I'm </span>
-    <span class="gpt-subtitle">Aptero</span>
-    <span class="gpt-title">'s AI</span>
+  <div class="fi mt-2" style="display: inline; text-align: center;">
+    <section style="display: flex; justify-content: space-between;">
+      <span style="display: flex; width: 40px;"></span>
+      <Logo />
+      <span id="customImg" style="width: 100px; height: 100px; object-fit: cover; background-size:100% 100%; visibility: hidden;"></span>
+      <Themetoggle />
+    </section>
+    <span style="display: flex; height: 8px;"></span> <!-- spacer -->
+    <section>
+      <CustomGreetings/>
+      <span id="customGreetings">Hello ! I'm Aptero's AI</span>
+      <p id="customDescription" mt-1 op-60>Chatbot based on OpenAI's ChatGPT API (gpt-3.5-turbo).</p>
+    </section>
+    
   </div>
-  <p mt-1 op-60>Chatbot based on OpenAI's ChatGPT API (gpt-3.5-turbo).</p>
+  
 </header>

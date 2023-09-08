@@ -1,0 +1,40 @@
+<script>
+
+//----> Here we are going to replace the [ and the ] symbols with Custom colors!
+
+const urlParams = new URLSearchParams(window.location.search);
+let customGreetings = '<span class="gpt-title" style="margin-right: 0px;">';
+
+if (urlParams.get('customGreetings'))
+{customGreetings += urlParams.get('customGreetings');}
+else
+{customGreetings += "Hello ! I'm [Aptero]'s AI";}
+
+
+//Force color if a custom color is set
+let customColorTag = "";
+if (urlParams.get('customColor'))
+{customColorTag = `style="--un-gradient-from: ${urlParams.get('customColor')}; --un-gradient-to: ${urlParams.get('customColor')};"`}
+
+
+//Switch text to the custom color!
+const cc_a = customGreetings.replace("[", `</span><span class="gpt-subtitle" ${customColorTag}>`)
+//Switch back to the default color!
+const cc_b = cc_a.replace("]", '</span><span class="gpt-title">')
+//End
+const cc_c = cc_b+'</span>';
+
+
+//----> Also, we can change the description
+document.getElementById('customGreetings').innerHTML = cc_c;
+
+if (urlParams.get('customDescription'))
+{document.getElementById('customDescription').innerHTML = urlParams.get('customDescription');}
+else
+{document.getElementById('customDescription').remove();}
+
+
+</script>
+
+
+  

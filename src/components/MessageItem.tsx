@@ -15,11 +15,40 @@ interface Props {
 }
 
 export default ({ role, message, showRetry, onRetry }: Props) => {
-  const roleClass = {
-    system: 'bg-gradient-to-r from-gray-300 via-gray-200 to-gray-300',
-    user: 'bg-rouge drop-shadow-md',
-    assistant: 'bg-jaune drop-shadow-md',
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const customIconUser = urlParams.get('customIconUser');
+  const customIconAssistant = urlParams.get('customIconAssistant');
+
+  var userBase = 'bg-rouge';
+  var assistantBase = 'bg-jaune';
+  var userIcon = '';
+  var assistantIcon = '';
+
+  
+  if (customIconUser)
+  {
+    userBase = '';
+    userIcon = customIconUser;
   }
+  if (customIconAssistant)
+  {
+    assistantBase = '';
+    assistantIcon = customIconAssistant;
+  }
+
+  const roleClass = {
+    system: 'bg-gradient-to-r from-gray-300 via-gray-200 to-gray-300', //how?
+    user: userBase, 
+    assistant: assistantBase,
+  }
+  const roleImage = {
+    system: '', //how?
+    user: userIcon, 
+    assistant: assistantIcon,
+  }
+
+
   const [source] = createSignal('')
   const { copy, copied } = useClipboard({ source, copiedDuring: 1000 })
 
@@ -71,7 +100,9 @@ export default ({ role, message, showRetry, onRetry }: Props) => {
   return (
     <div class="py-2 -mx-4 px-4 transition-colors md:hover:bg-slate/3">
       <div class="flex gap-3 rounded-lg" class:op-75={role === 'user'}>
-        <div class={`shrink-0 w-7 h-7 mt-4 rounded-full op-80 ${roleClass[role]}`} />
+        <div class={`shrink-0 w-7 h-7 mt-4 rounded-full op-80 drop-shadow-md ${roleClass[role]}`}>
+          <img src={roleImage[role]} onerror="this.style.display='none'" style='border-radius: 999px; object-fit: cover; width: 100%; height: 100%;'/>
+        </div>
         <div class="message prose break-words overflow-hidden" innerHTML={htmlString()} />
       </div>
       {showRetry?.() && onRetry && (

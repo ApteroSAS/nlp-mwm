@@ -33,6 +33,9 @@ export default () => {
   const [controller, setController] = createSignal<AbortController>(null)
   const [isStick, setStick] = createSignal(false)
 
+  //We add a Default MODEL that can be changed using a Query string!
+  const [currentModel, setCurrentModel] = createSignal('gpt-3.5-turbo')
+
   createEffect(() => (isStick() && smoothToBottom()))
 
   onMount(() => {
@@ -47,8 +50,11 @@ export default () => {
       lastPostion = nowPostion
     })
 
-    try {
-      if (localStorage.getItem('messageList') && localStorage.getItem('messageList') !== '[]') {
+    if (params.get('model'))
+      setCurrentModel(params.get('model'))
+
+    try { //Do not load if the ignorecache is set to true
+      if (!(params.get('ignorecache')) && localStorage.getItem('messageList') && localStorage.getItem('messageList') !== '[]') {
         setMessageList(JSON.parse(localStorage.getItem('messageList')))
       } else if (params.get('intro')) {
         setMessageList([{
@@ -66,10 +72,14 @@ export default () => {
       console.error(err)
     }
     setLoading(false);
-    window.addEventListener('beforeunload', handleBeforeUnload)
-    onCleanup(() => {
-      window.removeEventListener('beforeunload', handleBeforeUnload)
-    })
+    //Do not save if the ignorecache is set to true
+    if (!params.get('ignorecache'))
+    {
+      window.addEventListener('beforeunload', handleBeforeUnload)
+      onCleanup(() => {
+        window.removeEventListener('beforeunload', handleBeforeUnload)
+      })
+    }
   })
 
   const handleBeforeUnload = () => {
@@ -123,10 +133,12 @@ export default () => {
           content: currentSystemRoleSettings(),
         })
       }
+      //console.log(currentModel())
       const timestamp = Date.now()
       const response = await fetch('./api/generate', {
         method: 'POST',
         body: JSON.stringify({
+          model: currentModel(), //We add the model to the request so we can change it using the current Query string
           messages: requestMessageList,
           time: timestamp,
           pass: storagePassword,

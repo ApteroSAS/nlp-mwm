@@ -1,0 +1,67 @@
+
+<script>
+
+//This scripts allows to change the background image and the sticky header from the URL parameters
+
+const urlParams = new URLSearchParams(window.location.search);
+const isSticky = urlParams.get('sticky');
+const customImg = urlParams.get('customImg');
+const customImgRound = urlParams.get('customImgRound');
+const customBackground = urlParams.get('customBackground');
+
+// Apply the styles to header
+const myHeader = document.getElementById("header");
+myHeader.classList.add("transition-opacity", "filter", "backdrop-blur-sm");
+myHeader.style.transform = 'translate(-10px, 0)';
+myHeader.style.width = 'calc(100% + 20px)';
+
+if (customBackground)
+{
+  const myBody = document.body.style;
+
+  // Apply the styles to body
+  myBody.backgroundImage = `url(${customBackground})`;
+  myBody.backgroundAttachment = 'fixed';
+  myBody.backgroundPosition = 'center';
+  myBody.backgroundRepeat = 'no-repeat';
+  myBody.backgroundSize = 'cover';
+
+  
+  //This next script is to make the background move with the scroll
+  //It works but it has a very "outdated look" so I commented it
+  /*window.onscroll = function () {
+    let scrollLeft = document.documentElement.scrollLeft || document.body.scrollLeft;
+    let scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
+
+    let header = document.getElementById('header');
+
+    header.style.backgroundPositionX = (-scrollLeft) + "px";
+    header.style.backgroundPositionY = (-scrollTop) + "px";
+  }*/
+}
+
+if (isSticky === 'true')
+{document.getElementById('header').classList.add('sticky');}
+
+if (customImg)
+{
+  //console.log(document.getElementById('customImg'))
+  document.getElementById('Calque_1').style.display = 'none';
+  document.getElementById('customImg').style.display = 'inline';
+  document.getElementById('customImg').style.visibility = 'visible';
+  document.getElementById('customImg').style.backgroundImage = `url(${customImg})`;
+  if (customImgRound)
+  {
+    const realval = Math.min(100, Math.max(0, Number(customImgRound)))/2;
+    document.getElementById('customImg').style.borderRadius = realval.toString()+"%";
+  }
+}
+else
+{
+  document.getElementById('Calque_1').style.display = 'inline';
+  document.getElementById('Calque_1').style.textAlign = 'center';
+  document.getElementById('customImg').style.display = 'none';
+}
+
+
+</script>
