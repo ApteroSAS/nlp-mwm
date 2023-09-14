@@ -53,8 +53,9 @@ export default () => {
     if (params.get('model'))
       setCurrentModel(params.get('model'))
 
-    try { //Do not load if the ignorecache is set to true
-      if (!(params.get('ignorecache')) && localStorage.getItem('messageList') && localStorage.getItem('messageList') !== '[]') {
+    try { //Do not loa the cache EVER!
+      //if (!(params.get('ignorecache')) && localStorage.getItem('messageList') && localStorage.getItem('messageList') !== '[]') {
+      if (false && localStorage.getItem('messageList') && localStorage.getItem('messageList') !== '[]') {
         setMessageList(JSON.parse(localStorage.getItem('messageList')))
       } else if (params.get('intro')) {
         setMessageList([{
