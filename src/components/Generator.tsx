@@ -3,6 +3,7 @@ import { useThrottleFn } from 'solidjs-use'
 import { generateSignature } from '@/utils/auth'
 import IconClear from './icons/Clear'
 import MessageItem from './MessageItem'
+import IconReport from './icons/Report'
 
 import SystemRoleSettings from './SystemRoleSettings'
 import ErrorMessageItem from './ErrorMessageItem'
@@ -32,6 +33,7 @@ export default () => {
   const [loading, setLoading] = createSignal(true)
   const [controller, setController] = createSignal<AbortController>(null)
   const [isStick, setStick] = createSignal(false)
+  const [popupVisible, setPopupVisible] = createSignal(false);
 
   //We add a Default MODEL that can be changed using a Query string!
   const [currentModel, setCurrentModel] = createSignal('gpt-3.5-turbo')
@@ -53,7 +55,7 @@ export default () => {
     if (params.get('model'))
       setCurrentModel(params.get('model'))
 
-    try { //Do not loa the cache EVER!
+    try { //Do not load the cache EVER!
       //if (!(params.get('ignorecache')) && localStorage.getItem('messageList') && localStorage.getItem('messageList') !== '[]') {
       if (false && localStorage.getItem('messageList') && localStorage.getItem('messageList') !== '[]') {
         setMessageList(JSON.parse(localStorage.getItem('messageList')))
@@ -253,6 +255,31 @@ export default () => {
     }
   }
 
+  const report = () => {
+    setPopupVisible(!popupVisible());
+  };
+  
+  const hidePopup = () => {
+    setPopupVisible(false);
+  };
+
+  const copyAll = () => {// Copy all the messages to the clipboard (including the currentSystemRoleSettings at the beggining) and sepparated by a comma
+    let reportText = '{"role":"system","content":'+currentSystemRoleSettings+'},'
+    messageList().forEach((message) => {
+      reportText += JSON.stringify(message)
+      if (message !== messageList()[messageList().length - 1])
+        reportText += ','
+    })
+    reportText = '['+reportText+"]"
+    navigator.clipboard.writeText(reportText)
+  }
+
+  const openReport = () => {//Open the page only
+    const url = new URL(window.location.href)
+    const params = url.searchParams
+    window.open(`https://openai.com/form/chat-model-feedback/`, '_blank')
+  }
+
   return (
     <div class="chatSpace" >
       {/*
@@ -264,6 +291,16 @@ export default () => {
         setCurrentSystemRoleSettings={setCurrentSystemRoleSettings}
       />
       */}
+      {popupVisible() && (
+        <div class="report-popup">
+          <p class="content">You will be redirected to the OpenAi website</p>
+          <div class="content">
+            <button class="content" gen-slate-btn style="margin: 0 1em" onClick={copyAll}>Copy Chat</button>
+            <button class="content" gen-slate-btn style="margin: 0 1em" onClick={openReport}>Open Form</button>
+          </div>
+          <button class="content" onClick={hidePopup}>Close</button>
+        </div>
+      )}
       <Index each={messageList()}>
         {(message, index) => (
           <MessageItem
@@ -319,8 +356,14 @@ export default () => {
           <button title="Clear" onClick={clear} disabled={systemRoleEditing()} gen-slate-btn>
             <IconClear />
           </button>
+          <button title="Report" onClick={report} disabled={systemRoleEditing()} gen-slate-btn>
+            <IconReport />
+          </button>
         </div>
       </Show>
+      <div class="sub-footer" style="opacity: 0.6; text-align: center;">
+        Powered by ChatGPT ({currentModel()}) - Please report any inappropriate, harmful, or offensive content using the report button
+      </div>
 
     </div>
   )
