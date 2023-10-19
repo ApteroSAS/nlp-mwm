@@ -264,7 +264,7 @@ export default () => {
   };
 
   const copyAll = () => {// Copy all the messages to the clipboard (including the currentSystemRoleSettings at the beggining) and sepparated by a comma
-    let reportText = '{"role":"system","content":'+currentSystemRoleSettings+'},'
+    let reportText = '{"role":"system","content":'+JSON.stringify(currentSystemRoleSettings())+'},'
     messageList().forEach((message) => {
       reportText += JSON.stringify(message)
       if (message !== messageList()[messageList().length - 1])
