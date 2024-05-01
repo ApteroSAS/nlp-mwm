@@ -2,6 +2,7 @@
 import { ProxyAgent, fetch } from 'undici'
 // #vercel-end
 import { generatePayload, parseOpenAIStream } from '@/utils/openAI'
+import { parseClaudeStream, generateClaudePayload } from '@/utils/anthropicAI'
 import { verifySignature } from '@/utils/auth'
 import type { APIRoute } from 'astro'
 
@@ -11,9 +12,12 @@ const baseUrl = ((import.meta.env.OPENAI_API_BASE_URL) || 'https://api.openai.co
 const sitePassword = import.meta.env.SITE_PASSWORD || ''
 const passList = sitePassword.split(',') || []
 
+const claudeApiKey = import.meta.env.ANTHROPIC_API_KEY
+const claudeBaseUrl = ((import.meta.env.ANTHROPIC_API_BASE_URL) || 'https://api.anthropic.com').trim().replace(/\/$/, '')
+
 export const post: APIRoute = async(context) => {
   const body = await context.request.json()
-  const { sign, time, messages, pass , model} = body
+  const { sign, time, messages, pass , model, system} = body
   if (!messages) {
     return new Response(JSON.stringify({
       error: {
@@ -35,15 +39,21 @@ export const post: APIRoute = async(context) => {
       },
     }), { status: 401 })
   }
-  const initOptions = generatePayload(apiKey, messages, model)
+  const isClaudeModel = model.startsWith('claude');
+  const initOptions = isClaudeModel
+    ? generateClaudePayload(claudeApiKey, messages, model, system)
+    : generatePayload(apiKey, messages, model);
   // #vercel-disable-blocks
   if (httpsProxy)
     initOptions.dispatcher = new ProxyAgent(httpsProxy)
   // #vercel-end
 
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-expect-error
-  const response = await fetch(`${baseUrl}/v1/chat/completions`, initOptions).catch((err: Error) => {
+  const response = await fetch(
+    isClaudeModel ? `${claudeBaseUrl}/v1/messages` : `${baseUrl}/v1/chat/completions`,
+    //@ts-expect-error
+    initOptions
+  ).catch((err: Error) => {
     console.error(err)
     return new Response(JSON.stringify({
       error: {
@@ -53,5 +63,5 @@ export const post: APIRoute = async(context) => {
     }), { status: 500 })
   }) as Response
 
-  return parseOpenAIStream(response) as Response
+  return isClaudeModel ? parseClaudeStream(response) : parseOpenAIStream(response);
 }

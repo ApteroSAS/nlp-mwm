@@ -130,7 +130,7 @@ export default () => {
       const controller = new AbortController()
       setController(controller)
       const requestMessageList = [...messageList()]
-      if (currentSystemRoleSettings()) {
+      if (currentSystemRoleSettings() && currentModel().startsWith('gpt')) {
         requestMessageList.unshift({
           role: 'system',
           content: currentSystemRoleSettings(),
@@ -143,6 +143,7 @@ export default () => {
         body: JSON.stringify({
           model: currentModel(), //We add the model to the request so we can change it using the current Query string
           messages: requestMessageList,
+          system: currentModel().startsWith('claude') ? currentSystemRoleSettings() : undefined,
           time: timestamp,
           pass: storagePassword,
           sign: await generateSignature({
@@ -362,7 +363,7 @@ export default () => {
         </div>
       </Show>
       <div class="sub-footer" style="opacity: 0.6; text-align: center;">
-        Powered by ChatGPT ({currentModel()}) - Please report any inappropriate, harmful, or offensive content using the report button
+        Powered by {currentModel().startsWith('claude') ? 'Claude' : 'ChatGPT'} ({currentModel()}) - Please report any inappropriate, harmful, or offensive content using the report button
       </div>
 
     </div>
