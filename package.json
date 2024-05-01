@@ -1,7 +1,7 @@
 {
   "name": "chatgpt-api-demo",
   "version": "0.1.2",
-  "packageManager": "pnpm@7.28.0",
+  "packageManager": "pnpm@9.0.6",
   "scripts": {
     "dev": "astro dev",
     "start": "astro dev",
@@ -11,7 +11,8 @@
     "preview": "astro preview",
     "astro": "astro",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx,.astro",
-    "lint:fix": "eslint . --ext .js,.jsx,.ts,.tsx,.astro --fix"
+    "lint:fix": "eslint . --ext .js,.jsx,.ts,.tsx,.astro --fix",
+    "docker:publish": "npx dockflow publish"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.17.2",
