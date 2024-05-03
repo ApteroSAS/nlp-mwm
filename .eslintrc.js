@@ -1,10 +1,12 @@
 module.exports = {
   extends: ['@evan-yang', 'plugin:astro/recommended'],
   rules: {
-    'no-console': ['error', { allow: ['error'] }],
+    'no-console': ['warn', { allow: ['error'] }],
+    'react/style-prop-object': 'off',
     'react/display-name': 'off',
     'react-hooks/rules-of-hooks': 'off',
     '@typescript-eslint/no-use-before-define': 'off',
+    'curly': 'off',
   },
   overrides: [
     {
@@ -15,7 +17,7 @@ module.exports = {
         extraFileExtensions: ['.astro'],
       },
       rules: {
-        'no-mixed-spaces-and-tabs': ['error', 'smart-tabs'],
+        'no-mixed-spaces-and-tabs': ['warn', 'smart-tabs'],
       },
     },
     {

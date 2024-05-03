@@ -1,41 +1,33 @@
 import { Index, Show, createEffect, createSignal, onCleanup, onMount } from 'solid-js'
 import { useThrottleFn } from 'solidjs-use'
 import { generateSignature } from '@/utils/auth'
+import { accumulateOrGetValue } from '@/aptero/api/Accumulator'
+import { FrontEndCommandAPI } from '@/aptero/api/FrontEndCommandAPI2'
 import IconClear from './icons/Clear'
 import MessageItem from './MessageItem'
 import IconReport from './icons/Report'
 
-import SystemRoleSettings from './SystemRoleSettings'
 import ErrorMessageItem from './ErrorMessageItem'
 import type { ChatMessage, ErrorMessage } from '@/types'
+
+const frontEndCommandAPI = new FrontEndCommandAPI()
 
 export default () => {
   let inputRef: HTMLTextAreaElement
 
-  const [currentSystemRoleSettings, setCurrentSystemRoleSettings] = createSignal(
-    'You are a representative of Aptero. Aptero fournit des mondes virtuels personnalisables pour les '
-      + 'entreprises et a développé une technologie d’espaces 3D immersifs en web qui s’intègre directement sur les '
-      + 'outils de collaboration tels que Microsoft Teams. Ils ont remporté le premier prix de la solution Business de '
-      + 'Co-Working auprès du grand jury composé notamment de Mr.Graylin (Président Chine à HTC), Sandra Rodriguez '
-      + '(Professeur au MIT), Timoni West (Directrice Produit à Unity) ou encore Jeremy Bailenson (Professeur à '
-      + 'Stanford). Ils ont également remporté le prix Laval Virtual Best Virtual World and Metaverse Prize 2023 et ont '
-      + 'été invités par l’ambassadeur français en Corée à rencontrer la présidente de l’Institut Français, Eva Nguyen '
-      + 'Binh. Ils ont également annoncé leur expansion au Chili cette année et leur collaboration avec une start-up '
-      + 'coréenne dynamique, Procyan. En outre, ils ont déployé leur solution chez Paris CDG Alliance pour Noé, '
-      + 'l’univers métiers. Ils sont également accélérés en 2023 par Bigbang Angels, Inc. en Corée. Voici les '
-      + 'co-fondateurs : Pierre-Henri Fricot (CTO) Cedric CHANE CHING (CEO) Christian GOMEZ CARVAJAL (COO)',
-  )
+  const [currentSystemRoleSettings, setCurrentSystemRoleSettings] = createSignal('')
 
-  const [systemRoleEditing, setSystemRoleEditing] = createSignal(false)
+  const [systemRoleEditing] = createSignal(false)
   const [messageList, setMessageList] = createSignal<ChatMessage[]>([])
   const [currentError, setCurrentError] = createSignal<ErrorMessage>()
   const [currentAssistantMessage, setCurrentAssistantMessage] = createSignal('')
   const [loading, setLoading] = createSignal(true)
   const [controller, setController] = createSignal<AbortController>(null)
   const [isStick, setStick] = createSignal(false)
-  const [popupVisible, setPopupVisible] = createSignal(false);
+  const [popupVisible, setPopupVisible] = createSignal(false)
+  const [threadId, setThreadId] = createSignal<string | null>(null)
 
-  //We add a Default MODEL that can be changed using a Query string!
+  // We add a Default MODEL that can be changed using a Query string!
   const [currentModel, setCurrentModel] = createSignal('gpt-3.5-turbo')
 
   createEffect(() => (isStick() && smoothToBottom()))
@@ -55,11 +47,8 @@ export default () => {
     if (params.get('model'))
       setCurrentModel(params.get('model'))
 
-    try { //Do not load the cache EVER!
-      //if (!(params.get('ignorecache')) && localStorage.getItem('messageList') && localStorage.getItem('messageList') !== '[]') {
-      if (false && localStorage.getItem('messageList') && localStorage.getItem('messageList') !== '[]') {
-        setMessageList(JSON.parse(localStorage.getItem('messageList')))
-      } else if (params.get('intro')) {
+    try {
+      if (params.get('intro')) {
         setMessageList([{
           content: params.get('intro'),
           role: 'assistant',
@@ -74,15 +63,36 @@ export default () => {
     } catch (err) {
       console.error(err)
     }
-    setLoading(false);
-    //Do not save if the ignorecache is set to true
-    if (!params.get('ignorecache'))
-    {
+    // Do not save if the ignorecache is set to true
+    if (!params.get('ignorecache')) {
       window.addEventListener('beforeunload', handleBeforeUnload)
       onCleanup(() => {
         window.removeEventListener('beforeunload', handleBeforeUnload)
       })
     }
+    (async() => {
+      await frontEndCommandAPI.listen()
+      const roomDescription = await Promise.race([
+        frontEndCommandAPI.describe(),
+        new Promise(resolve => setTimeout(() => resolve(''), 3000)),
+      ])
+      const roomDescriptionStr = roomDescription ? `\n\n\nHere is a technical description (as if you used describe) of the room: ${JSON.stringify(roomDescription)}` : ''
+      fetch('./api/create', {
+        method: 'POST',
+        body: JSON.stringify({
+          threadId, // TODO load from storage to retreive previous thread // empty to start a new convo
+          model: currentModel(),
+          systemPrompt: currentSystemRoleSettings() + roomDescriptionStr,
+          useTool: !!roomDescription,
+        }),
+      }).then(response => response.json()).then((data) => {
+        console.log(data.id)
+        setThreadId(data.id)
+        setLoading(false)
+      }).catch((error) => {
+        console.error('Error:', error)
+      })
+    })()
   })
 
   const handleBeforeUnload = () => {
@@ -115,8 +125,6 @@ export default () => {
   }, 300, false, true)
 
   const instantToBottom = () => {
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-expect-error
     window.scrollTo({ top: document.body.scrollHeight, behavior: 'instant' })
   }
 
@@ -136,16 +144,17 @@ export default () => {
           content: currentSystemRoleSettings(),
         })
       }
-      //console.log(currentModel())
+      // console.log(currentModel())
       const timestamp = Date.now()
       const response = await fetch('./api/generate', {
         method: 'POST',
         body: JSON.stringify({
-          model: currentModel(), //We add the model to the request so we can change it using the current Query string
+          model: currentModel(), // We add the model to the request so we can change it using the current Query string
           messages: requestMessageList,
           system: currentModel().startsWith('claude') ? currentSystemRoleSettings() : undefined,
           time: timestamp,
           pass: storagePassword,
+          assistantId: threadId(),
           sign: await generateSignature({
             t: timestamp,
             m: requestMessageList?.[requestMessageList.length - 1]?.content || '',
@@ -170,14 +179,31 @@ export default () => {
       while (!done) {
         const { value, done: readerDone } = await reader.read()
         if (value) {
-          const char = decoder.decode(value)
-          if (char === '\n' && currentAssistantMessage().endsWith('\n'))
-            continue
+          let chunk = decoder.decode(value)
+          chunk = accumulateOrGetValue(chunk)
+          if (chunk) {
+            if (chunk.startsWith('JSON://')) {
+              const json = JSON.parse(chunk.replace('JSON://', ''))
+              if (json.type === 'function') {
+                setCurrentAssistantMessage(`${currentAssistantMessage()} \n **Executing Function: ${json.function.name}** \n`)
+                frontEndCommandAPI.execCommand(json).then(async(res) => {
+                  const payload = { assistantId: threadId(), toolCallId: json.id, output: res }
+                  await fetch('./api/notifyCall', { method: 'POST', body: JSON.stringify(payload) })
+                  console.log(res)
+                }).catch((err) => {
+                  console.error(err)
+                })
+              }
+              console.log(json)
+            } else {
+              if (chunk === '\n' && currentAssistantMessage().endsWith('\n'))
+                continue
+              if (chunk)
+                setCurrentAssistantMessage(currentAssistantMessage() + chunk)
 
-          if (char)
-            setCurrentAssistantMessage(currentAssistantMessage() + char)
-
-          isStick() && instantToBottom()
+              isStick() && instantToBottom()
+            }
+          }
         }
         done = readerDone
       }
@@ -257,28 +283,26 @@ export default () => {
   }
 
   const report = () => {
-    setPopupVisible(!popupVisible());
-  };
-  
-  const hidePopup = () => {
-    setPopupVisible(false);
-  };
+    setPopupVisible(!popupVisible())
+  }
 
-  const copyAll = () => {// Copy all the messages to the clipboard (including the currentSystemRoleSettings at the beggining) and sepparated by a comma
-    let reportText = '{"role":"system","content":'+JSON.stringify(currentSystemRoleSettings())+'},'
+  const hidePopup = () => {
+    setPopupVisible(false)
+  }
+
+  const copyAll = () => { // Copy all the messages to the clipboard (including the currentSystemRoleSettings at the beggining) and sepparated by a comma
+    let reportText = `{"role":"system","content":${JSON.stringify(currentSystemRoleSettings())}},`
     messageList().forEach((message) => {
       reportText += JSON.stringify(message)
       if (message !== messageList()[messageList().length - 1])
         reportText += ','
     })
-    reportText = '['+reportText+"]"
+    reportText = `[${reportText}]`
     navigator.clipboard.writeText(reportText)
   }
 
-  const openReport = () => {//Open the page only
-    const url = new URL(window.location.href)
-    const params = url.searchParams
-    window.open(`https://openai.com/form/chat-model-feedback/`, '_blank')
+  const openReport = () => { // Open the page only
+    window.open('https://openai.com/form/chat-model-feedback/', '_blank')
   }
 
   return (
@@ -329,41 +353,53 @@ export default () => {
           </div>
         )}
       >
-        <div class="gen-text-wrapper" class:op-50={systemRoleEditing()}>
-          <div class="rounded-md hover:bg-slate/10 w-fit h-fit transition-colors active:scale-90" class:stick-btn-on={isStick()}>
-            <div>
-              <button title="stick to bottom" type="button" onClick={() => setStick(!isStick())} gen-slate-btn>
-                <div i-ph-arrow-down-bold />
+        <div class:op-50={systemRoleEditing()}>
+          <div>
+            <textarea
+              ref={inputRef!}
+              disabled={systemRoleEditing()}
+              onKeyDown={handleKeydown}
+              placeholder="Enter something..."
+              autocomplete="off"
+              autofocus
+              onInput={() => {
+                inputRef.style.height = 'auto'
+                inputRef.style.height = `${inputRef.scrollHeight}px`
+              }}
+              style={{ width: '100%' }}
+              rows="1"
+              class="gen-textarea"
+            />
+            <div
+              style={{
+                'display': 'flex',
+                'gap': '10px',
+                'flex-direction': 'row-reverse',
+              }}
+            >
+              <button onClick={handleButtonClick} disabled={systemRoleEditing()} gen-slate-btn>
+                Send
               </button>
+              <button title="Clear" onClick={clear} disabled={systemRoleEditing()} gen-slate-btn>
+                <IconClear />
+              </button>
+              <button title="Report" onClick={report} disabled={systemRoleEditing()} gen-slate-btn>
+                <IconReport />
+              </button>
+              <div
+                class="rounded-md hover:bg-slate/10 w-fit h-fit transition-colors active:scale-90"
+                class:stick-btn-on={isStick()}
+              >
+                <button title="stick to bottom" type="button" onClick={() => setStick(!isStick())} gen-slate-btn>
+                  <div i-ph-arrow-down-bold />
+                </button>
+              </div>
             </div>
           </div>
-          <textarea
-            ref={inputRef!}
-            disabled={systemRoleEditing()}
-            onKeyDown={handleKeydown}
-            placeholder="Enter something..."
-            autocomplete="off"
-            autofocus
-            onInput={() => {
-              inputRef.style.height = 'auto'
-              inputRef.style.height = `${inputRef.scrollHeight}px`
-            }}
-            rows="1"
-            class="gen-textarea"
-          />
-          <button onClick={handleButtonClick} disabled={systemRoleEditing()} gen-slate-btn>
-            Send
-          </button>
-          <button title="Clear" onClick={clear} disabled={systemRoleEditing()} gen-slate-btn>
-            <IconClear />
-          </button>
-          <button title="Report" onClick={report} disabled={systemRoleEditing()} gen-slate-btn>
-            <IconReport />
-          </button>
         </div>
       </Show>
       <div class="sub-footer" style="opacity: 0.6; text-align: center;">
-        Powered by {currentModel().startsWith('claude') ? 'Claude' : 'ChatGPT'} ({currentModel()}) - Please report any inappropriate, harmful, or offensive content using the report button
+        You can report any inappropriate content using the report button
       </div>
 
     </div>

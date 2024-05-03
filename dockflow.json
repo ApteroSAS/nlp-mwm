@@ -1,4 +1,5 @@
 {
     "image" : "aptero-chatgpt-demo",
-    "registry" : "rg.fr-par.scw.cloud/aptero"
+    "registry" : "rg.fr-par.scw.cloud/aptero",
+    "version": "0.1.3"
 }

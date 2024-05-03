@@ -1,9 +1,40 @@
 import { createParser } from 'eventsource-parser'
+// #vercel-disable-blocks
+import { ProxyAgent, fetch } from 'undici'
+// #vercel-end
 import type { ParsedEvent, ReconnectInterval } from 'eventsource-parser'
 import type { ChatMessage } from '@/types'
 
 // I modified the Payload so we can use a model based on the Query String
 const defModel = import.meta.env.OPENAI_API_MODEL || 'gpt-3.5-turbo'
+const apiKey = import.meta.env.OPENAI_API_KEY
+const httpsProxy = import.meta.env.HTTPS_PROXY
+const baseUrl = ((import.meta.env.OPENAI_API_BASE_URL) || 'https://api.openai.com').trim().replace(/\/$/, '')
+
+export const processOpenAI = async(
+  messages: ChatMessage[],
+  model = defModel,
+) => {
+  const initOptions = generatePayload(apiKey, messages, model)
+  // #vercel-disable-blocks
+  if (httpsProxy)
+    initOptions.dispatcher = new ProxyAgent(httpsProxy)
+  // #vercel-end
+
+  const response = await fetch(`${baseUrl}/v1/chat/completions`,
+    initOptions as any,
+  ).catch((err: Error) => {
+    console.error(err)
+    return new Response(JSON.stringify({
+      error: {
+        code: err.name,
+        message: err.message,
+      },
+    }), { status: 500 })
+  }) as Response
+
+  return parseOpenAIStream(response)
+}
 
 export const generatePayload = (apiKey: string, messages: ChatMessage[], model = defModel): RequestInit & { dispatcher?: any } => ({
   headers: {
