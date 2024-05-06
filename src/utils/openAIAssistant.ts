@@ -28,13 +28,37 @@ const contexts = new Map<string, ThreadContext>()
  */
 export async function createAssistant(threadId: string, model: string = defModel, prompt?: string, useTool?: boolean): Promise<OpenAI.Beta.Assistants.Assistant> {
   (async() => {
-    // cleanup old assistants delete assistant of more that a day old
-    for await (const assistant of openai.beta.assistants.list()) {
-      // created_at integer The Unix timestamp (in seconds) for when the assistant was created.
-      if (assistant.created_at && new Date(assistant.created_at * 1000).getTime() < (Date.now() - 24 * 60 * 60 * 1000)) {
-        await openai.beta.assistants.del(assistant.id)
-        console.log('deleted assistant', assistant.id)
+    try {
+      // cleanup old assistants delete assistant of more that a day old
+
+
+
+      for await (const assistant of openai.beta.assistants.list()) {
+        if (assistant.created_at && new Date(assistant.created_at * 1000).getTime() < (Date.now() - 24 * 60 * 60 * 1000)) {
+          try {
+            const existingAssistant = await openai.beta.assistants.retrieve(assistant.id)
+            if (existingAssistant) {
+              try {
+                await openai.beta.assistants.del(assistant.id)
+                console.log('->Deleted assistant', assistant.id)
+              } catch (error: any) {
+                console.error(`-->Error deleting assistant ${assistant.id}:`, error)
+              }
+            }
+          } catch (error: any) {
+            if (error.status === 404) {
+              console.log(`Assistant ${assistant.id} not found, skipping deletion.`)
+            } else {
+              console.error(`--->Error deleting assistant ${assistant.id}:`, error)
+            }
+          }
+        }
       }
+
+
+      
+    } catch (error: any) {
+      console.error('Error during assistant cleanup:', error)
     }
   })()
 

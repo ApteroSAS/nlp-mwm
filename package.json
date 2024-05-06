@@ -1,7 +1,7 @@
 {
   "name": "chatgpt-api-demo",
   "version": "0.1.2",
-  "packageManager": "pnpm@9.0.6",
+  "packageManager": "pnpm@9.1.0",
   "scripts": {
     "dev": "astro dev",
     "start": "astro dev",
@@ -30,7 +30,7 @@
     "markdown-it": "^13.0.1",
     "markdown-it-highlightjs": "^4.0.1",
     "markdown-it-katex": "^2.0.3",
-    "openai": "^4.40.0",
+    "openai": "^4.41.0",
     "solid-js": "1.6.12",
     "solidjs-use": "^1.2.0",
     "undici": "^5.20.0"
