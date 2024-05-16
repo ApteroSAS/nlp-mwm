@@ -2,7 +2,8 @@ import { Index, Show, createEffect, createSignal, onCleanup, onMount } from 'sol
 import { useThrottleFn } from 'solidjs-use'
 import { generateSignature } from '@/utils/auth'
 import { accumulateOrGetValue } from '@/aptero/api/Accumulator'
-import { FrontEndCommandAPI } from '@/aptero/api/FrontEndCommandAPI2'
+import { FrontEndCommandAPI } from '@/aptero/api/FrontEndCommandAPI'
+import { externalTrigger } from '@/aptero/api/ExternalTrigger'
 import IconClear from './icons/Clear'
 import MessageItem from './MessageItem'
 import IconReport from './icons/Report'
@@ -84,6 +85,7 @@ export default () => {
           model: currentModel(),
           systemPrompt: currentSystemRoleSettings() + roomDescriptionStr,
           useTool: !!roomDescription,
+          id: (roomDescription as any)?.room?.id,
         }),
       }).then(response => response.json()).then((data) => {
         console.log(data.id)
@@ -91,6 +93,26 @@ export default () => {
         setLoading(false)
       }).catch((error) => {
         console.error('Error:', error)
+      })
+      externalTrigger.onExternalTrigger((message) => {
+        // At least have one message so we trigger a reaction with a message
+        if (message) {
+          setMessageList([
+            ...messageList(), {
+              role: 'user',
+              content: message,
+            },
+          ])
+        } else {
+          setMessageList([
+            ...messageList(), {
+              role: 'assistant',
+              content: '**Processing button interaction.**',
+            },
+          ])
+        }
+        requestWithLatestMessage()
+        instantToBottom()
       })
     })()
   })

@@ -18,21 +18,12 @@ interface ThreadContext{
 }
 
 const contexts = new Map<string, ThreadContext>()
+const assistantMap = new Map<string, OpenAI.Beta.Assistants.Assistant[]>()// key is roomID
 
-/**
- * in our case the name of this assistant is the threadId (since we have custom prompt for every assistant / room)
- * @param threadId
- * @param model
- * @param prompt
- * @param useTool
- */
-export async function createAssistant(threadId: string, model: string = defModel, prompt?: string, useTool?: boolean): Promise<OpenAI.Beta.Assistants.Assistant> {
+export function cleanupAssistants() {
   (async() => {
     try {
       // cleanup old assistants delete assistant of more that a day old
-
-
-
       for await (const assistant of openai.beta.assistants.list()) {
         if (assistant.created_at && new Date(assistant.created_at * 1000).getTime() < (Date.now() - 24 * 60 * 60 * 1000)) {
           try {
@@ -54,17 +45,26 @@ export async function createAssistant(threadId: string, model: string = defModel
           }
         }
       }
-
-
-      
     } catch (error: any) {
       console.error('Error during assistant cleanup:', error)
     }
   })()
+}
+
+/**
+ * in our case the name of this assistant is the threadId (since we have custom prompt for every assistant / room)
+ * @param threadId
+ * @param model
+ * @param prompt
+ * @param useTool
+ * @param roomid
+ */
+export async function createAssistant(threadId: string, model: string = defModel, prompt?: string, useTool?: boolean, roomid?: string): Promise<OpenAI.Beta.Assistants.Assistant> {
+  cleanupAssistants()
 
   if (!prompt) prompt = 'You are a personal assistant'
 
-  return openai.beta.assistants.create({
+  const assistant = await openai.beta.assistants.create({
     name: 'Aptero Assistant',
     instructions: `${prompt}\n\n Only one tool at a time is supported`,
     tools: useTool
@@ -188,56 +188,75 @@ export async function createAssistant(threadId: string, model: string = defModel
       threadId,
     },
   })
+  if (roomid) {
+    if (assistantMap.has(roomid)) {
+      assistantMap.get(roomid).push(assistant)
+    } else {
+      assistantMap.set(roomid, [assistant])
+    }
+  }
+  return assistant
 }
 
 export const processOpenAI = async(
-  message: ChatMessage,
+  messages: ChatMessage[],
   assistantId: string,
 ) => {
-  const assistant = await openai.beta.assistants.retrieve(assistantId)
-  const threadId: string = (assistant.metadata as any).threadId
-  if (contexts.has(assistant.id)) {
-    try {
-      const context = contexts.get(assistant.id)
-      context.controller.close()
-      contexts.delete(assistant.id)
-      await openai.beta.threads.runs.cancel(
-        context.threadId,
-        context.runId,
-      )
-    } catch (e) {
-      console.error('Error closing previous thread', e)
-    }
-  }
-
-  await openai.beta.threads.messages.create(
-    threadId,
-    {
-      role: message.role as 'user' | 'assistant',
-      content: message.content,
-    },
-  )
-  const rawStream = await openai.beta.threads.runs.create(
-    threadId,
-    { assistant_id: assistant.id, stream: true },
-  )
-  const context: ThreadContext = {
-    assistantId: assistant.id,
-    threadId,
-    runId: '',
-    encoder: new TextEncoder(),
-  }
-  contexts.set(assistant.id, context)
-  const stream = new ReadableStream({
-    async start(controller) {
-      context.controller = controller
-      for await (const event of rawStream) {
-        await processEvent(event, context)
+  try {
+    const assistant = await openai.beta.assistants.retrieve(assistantId)
+    const threadId: string = (assistant.metadata as any).threadId
+    if (contexts.has(assistant.id)) {
+      try {
+        const context = contexts.get(assistant.id)
+        context.controller.close()
+        contexts.delete(assistant.id)
+        await openai.beta.threads.runs.cancel(
+          context.threadId,
+          context.runId,
+        )
+      } catch (e) {
+        console.error('Error closing previous thread', e)
       }
-    },
-  })
+    }
 
-  return new Response(stream)
+    for (const message of messages) {
+      await openai.beta.threads.messages.create(
+        threadId,
+        {
+          role: message.role as 'user' | 'assistant',
+          content: message.content,
+        },
+      )
+    }
+    const rawStream = await openai.beta.threads.runs.create(
+      threadId,
+      { assistant_id: assistant.id, stream: true },
+    )
+    const context: ThreadContext = {
+      assistantId: assistant.id,
+      threadId,
+      runId: '',
+      encoder: new TextEncoder(),
+    }
+    contexts.set(assistant.id, context)
+    const stream = new ReadableStream({
+      async start(controller) {
+        context.controller = controller
+        for await (const event of rawStream) {
+          await processEvent(event, context)
+        }
+      },
+    })
+
+    return new Response(stream)
+  } catch (e) {
+    console.error('Error processing OpenAI', e)
+    return new Response(JSON.stringify({
+      error: {
+        message: e.message,
+      },
+    }), { status: 500 })
+  }
 }
 
 async function processEvent(event: OpenAI.Beta.Assistants.AssistantStreamEvent,
@@ -313,6 +332,25 @@ export async function notifyCall(data: { assistantId: string, toolCallId: string
     }],
     context,
   )
+}
+
+export async function notifyRoomAction(roomId: string, description: string, reactionExpected = false, context?: any) {
+  if (!assistantMap.has(roomId)) {
+    throw new Error('No assistant found for room')
+  }
+  const assistants = assistantMap.get(roomId)
+  for (const assistant of assistants) {
+    await openai.beta.threads.messages.create(
+      (assistant.metadata as any).threadId,
+      {
+        role: 'assistant',
+        content: `On ${new Date().toISOString()} the user interacted with a button in the room.`
+            + `${(context ? `The technical context is ${JSON.stringify(context)}.` : '')}`
+            + `${(reactionExpected ? ' In the next message I should try to give an answer or do an action according to this interaction.' : '')}`
+            + `The interaction has the following description : ${description}`,
+      },
+    )
+  }
 }
 
 async function submitToolOutputs(toolOutputs: { tool_call_id: string, output: string }[], context: ThreadContext) {

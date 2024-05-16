@@ -11,11 +11,11 @@ const openai = new OpenAI({
 export const post: APIRoute = async(context) => {
   const body = await context.request.json()
 
-  const { threadId, model, systemPrompt, useTool } = body
-  const id = await createOrRetrieveThread(threadId, model, systemPrompt, useTool)
+  const { threadId, model, systemPrompt, useTool, id } = body
+  const tid = await createOrRetrieveThread(threadId, model, systemPrompt, useTool, id)
 
   return new Response(JSON.stringify({
-    id,
+    id: tid,
   }))
 }
 
@@ -25,8 +25,9 @@ export const post: APIRoute = async(context) => {
  * @param model
  * @param systemPrompt
  * @param useTool
+ * @param id
  */
-export async function createOrRetrieveThread(threadId: string, model: string, systemPrompt: string, useTool: boolean): Promise<string> {
+export async function createOrRetrieveThread(threadId: string, model: string, systemPrompt: string, useTool: boolean, id: string): Promise<string> {
   let thread
   try {
     thread = await openai.beta.threads.retrieve(threadId)
@@ -36,6 +37,6 @@ export async function createOrRetrieveThread(threadId: string, model: string, sy
   if (!thread) {
     thread = await openai.beta.threads.create()
   }
-  const assistant = await createAssistant(thread.id, model, systemPrompt, useTool)
+  const assistant = await createAssistant(thread.id, model, systemPrompt, useTool, id)
   return assistant.id
 }

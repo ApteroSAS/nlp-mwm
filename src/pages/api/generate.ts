@@ -46,7 +46,8 @@ export const post: APIRoute = async(context) => {
     if (isClaudeModel) {
       return processClaude(messages, model, system)
     } else {
-      const message = messages[messages.length - 1]
+      // just send the last message since assistant have context
+      const message = [messages[messages.length - 1]]
       return processOpenAI(message, assistantId)
     }
   } catch (e) {
