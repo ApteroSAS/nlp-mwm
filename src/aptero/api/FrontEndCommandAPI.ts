@@ -2,7 +2,10 @@ import { externalTrigger } from '@/aptero/api/ExternalTrigger'
 import type { MediaOptions, SpawnAttachConfig, TriggerAnimationAction } from '@/aptero/api/RoomApiInterface'
 
 export class FrontEndCommandAPI {
-  private requestMap = new Map<string, (value: any | PromiseLike<any>) => void>()
+  private requestMap = new Map<string, {
+    resolve: (value: any | PromiseLike<any>) => void
+    reject: (reason?: any) => void
+  }>()
 
   async listen() {
     window.addEventListener('message', this.handleResponse, false);
@@ -11,8 +14,15 @@ export class FrontEndCommandAPI {
 
   async sendCommandToParent(command: string, data: any): Promise<any> {
     const requestId = this.generateRequestId()
-    return new Promise((resolve) => {
-      this.requestMap.set(requestId, resolve)
+    return new Promise((resolve, reject) => {
+      this.requestMap.set(requestId, { resolve, reject })
+      // timeout after 30s
+      setTimeout(() => {
+        if (this.requestMap.has(requestId)) {
+          this.requestMap.delete(requestId)
+        }
+        reject(new Error('timeout 30s'))
+      }, 30000)
       window.parent.postMessage({ id: requestId, command, data }, '*')
     })
   }
@@ -23,14 +33,14 @@ export class FrontEndCommandAPI {
 
   handleResponse = (event: MessageEvent) => {
     const { id, response, error, command } = event.data
-
-    if (error) {
-      console.error('Error from parent:', error)
-      this.requestMap.get(id)?.(Promise.reject(error))
-    } else if (this.requestMap.has(id)) {
+    if (this.requestMap.has(id)) {
       const resolver = this.requestMap.get(id)
       this.requestMap.delete(id)
-      resolver(response)
+      if (error) {
+        resolver.reject(error)
+      } else {
+        resolver.resolve(response)
+      }
     } else if (command && command === 'externalTrigger') {
       externalTrigger.notifyExternalTrigger(event.data.message)
     }

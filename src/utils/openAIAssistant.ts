@@ -66,7 +66,7 @@ export async function createAssistant(threadId: string, model: string = defModel
 
   const assistant = await openai.beta.assistants.create({
     name: 'Aptero Assistant',
-    instructions: `${prompt}\n\n Only one tool at a time is supported`,
+    instructions: `${prompt}`,
     tools: useTool
       ? [
           {

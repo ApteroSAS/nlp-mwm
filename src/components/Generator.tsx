@@ -72,11 +72,18 @@ export default () => {
       })
     }
     (async() => {
-      await frontEndCommandAPI.listen()
-      const roomDescription = await Promise.race([
-        frontEndCommandAPI.describe(),
-        new Promise(resolve => setTimeout(() => resolve(''), 3000)),
-      ])
+      let roomDescription = null
+      try {
+        if (window.parent) {
+          await frontEndCommandAPI.listen()
+          roomDescription = await Promise.race([
+            frontEndCommandAPI.describe(),
+            new Promise(resolve => setTimeout(() => resolve(''), 3000)),
+          ])
+        }
+      } catch (e) {
+        console.info('No parent window found (no tool support)')
+      }
       const roomDescriptionStr = roomDescription ? `\n\n\nHere is a technical description (as if you used describe) of the room: ${JSON.stringify(roomDescription)}` : ''
       fetch('./api/create', {
         method: 'POST',
@@ -212,8 +219,10 @@ export default () => {
                   const payload = { assistantId: threadId(), toolCallId: json.id, output: res }
                   await fetch('./api/notifyCall', { method: 'POST', body: JSON.stringify(payload) })
                   console.log(res)
-                }).catch((err) => {
+                }).catch(async(err) => {
                   console.error(err)
+                  const payload = { assistantId: threadId(), toolCallId: json.id, output: `ERROR : ${typeof err === 'string' ? err : err.message}` }
+                  await fetch('./api/notifyCall', { method: 'POST', body: JSON.stringify(payload) })
                 })
               }
               console.log(json)
