@@ -1,6 +1,7 @@
 
 import OpenAI from 'openai'
 import type { ChatMessage } from '@/types'
+import { AItools } from './assistantTools'
 
 const defModel = import.meta.env.OPENAI_API_MODEL || 'gpt-3.5-turbo'
 const apiKey = import.meta.env.OPENAI_API_KEY
@@ -67,122 +68,7 @@ export async function createAssistant(threadId: string, model: string = defModel
   const assistant = await openai.beta.assistants.create({
     name: 'Aptero Assistant',
     instructions: `${prompt}`,
-    tools: useTool
-      ? [
-          {
-            type: 'function',
-            function: {
-              name: 'describe',
-              description: 'Describe the scene and the object of the scene',
-            },
-          },
-          {
-            type: 'function',
-            function: {
-              name: 'moveToWaypoint',
-              description: 'Teleport the client to a given waypoint name (the name must be the same as the one defined in opal)',
-              parameters: {
-                type: 'object',
-                properties: {
-                  waypoint: {
-                    type: 'string',
-                    description: 'The waypoint name to teleport to',
-                  },
-                },
-                required: ['waypoint'],
-              },
-            },
-          },
-          {
-            type: 'function',
-            function: {
-              name: 'spawnAttach',
-              description: 'Spawn a media (image, video, audio) and attach it to a designated media frame (usually named MFxxx or Media Frame xxx)',
-              parameters: {
-                type: 'object',
-                properties: {
-                  mediaFrameName: {
-                    type: 'string',
-                    description: 'The name of the media frame in Opal',
-                  },
-                  url: {
-                    type: 'string',
-                    description: 'URL of the media to be spawned',
-                  },
-                },
-                required: ['mediaFrameName', 'url'],
-              },
-            },
-          },
-          {
-            type: 'function',
-            function: {
-              name: 'spawn',
-              description: 'Spawn a media directly in front of the player',
-              parameters: {
-                type: 'object',
-                properties: {
-                  url: {
-                    type: 'string',
-                    description: 'URL of the media to be spawned',
-                  },
-                },
-                required: ['url'],
-              },
-            },
-          },
-          {
-            type: 'function',
-            function: {
-              name: 'removeFromMediaFrame',
-              description: 'Remove a media from a designated media frame',
-              parameters: {
-                type: 'object',
-                properties: {
-                  mediaFrameName: {
-                    type: 'string',
-                    description: 'The name of the media frame from which to remove media',
-                  },
-                },
-                required: ['mediaFrameName'],
-              },
-            },
-          },
-          {
-            type: 'function',
-            function: {
-              name: 'triggerAnimation',
-              description: 'Trigger an animation on a designated element',
-              parameters: {
-                type: 'object',
-                properties: {
-                  animName: {
-                    type: 'string',
-                    description: 'The name of the animation in the glb',
-                  },
-                  actionSpeed: {
-                    type: 'number',
-                    description: 'Speed of the animation, default to 1',
-                  },
-                  actionReclick: {
-                    type: 'number',
-                    description: '0: pause and resume, 1: reset and play again, 2: stop and reset the animation',
-                  },
-                  actionLoop: {
-                    type: 'boolean',
-                    description: 'Loop the animation an infinite amount of time, default to false',
-                  },
-                  actionRepeat: {
-                    type: 'number',
-                    description: 'Number of times the animation should be repeated, default to 1',
-                  },
-                },
-                required: ['animName'],
-              },
-            },
-          },
-        ]
-      : [],
+    tools: useTool ? AItools : [],
     model,
     metadata: {
       threadId,

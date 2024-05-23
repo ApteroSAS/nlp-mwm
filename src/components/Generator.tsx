@@ -158,7 +158,7 @@ export default () => {
   }
 
   const requestWithLatestMessage = async() => {
-    // console.log('requestWithLatestMessage')
+    // console.log('requestWithLatestMessage',currentModel())
     setLoading(true)
     setCurrentAssistantMessage('')
     setCurrentError(null)
@@ -173,7 +173,6 @@ export default () => {
           content: currentSystemRoleSettings(),
         })
       }
-      // console.log(currentModel())
       const timestamp = Date.now()
       const response = await fetch('./api/generate', {
         method: 'POST',
