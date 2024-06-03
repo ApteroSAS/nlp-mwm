@@ -54,8 +54,8 @@ importers:
         specifier: ^2.0.3
         version: 2.0.3
       openai:
-        specifier: ^4.41.0
-        version: 4.42.0
+        specifier: ^4.47.1
+        version: 4.47.1
       solid-js:
         specifier: 1.6.12
         version: 1.6.12
@@ -3271,8 +3271,8 @@ packages:
     resolution: {integrity: sha512-7x81NCL719oNbsq/3mh+hVrAWmFuEYUqrq/Iw3kUzH8ReypT9QQ0BLoJS7/G9k6N81XjW4qHWtjWwe/9eLy1EQ==}
     engines: {node: '>=12'}
 
-  openai@4.42.0:
-    resolution: {integrity: sha512-xbiQQ2YNqdkE6cHqeWKa7lsAvdYfgp84XiNFOVkAMa6+9KpmOL4hCWCRR6e6I/clpaens/T9XeLVtyC5StXoRw==}
+  openai@4.47.1:
+    resolution: {integrity: sha512-WWSxhC/69ZhYWxH/OBsLEirIjUcfpQ5+ihkXKp06hmeYXgBBIUCa9IptMzYx6NdkiOCsSGYCnTIsxaic3AjRCQ==}
     hasBin: true
 
   optionator@0.9.1:
@@ -8097,7 +8097,7 @@ snapshots:
       is-docker: 2.2.1
       is-wsl: 2.2.0
 
-  openai@4.42.0:
+  openai@4.47.1:
     dependencies:
       '@types/node': 18.15.5
       '@types/node-fetch': 2.6.11
