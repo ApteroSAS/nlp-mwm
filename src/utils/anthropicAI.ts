@@ -36,11 +36,11 @@ const claudeApiKey = import.meta.env.ANTHROPIC_API_KEY
 const claudeBaseUrl = ((import.meta.env.ANTHROPIC_API_BASE_URL) || 'https://api.anthropic.com').trim().replace(/\/$/, '')
 const httpsProxy = import.meta.env.HTTPS_PROXY
 
+// Update headers as needed
 const headerObject = {
   'Content-Type': 'application/json',
   'X-API-Key': `${claudeApiKey}`,
   'anthropic-version': '2023-06-01',
-  'anthropic-beta': 'tools-2024-05-16',
 }
 
 // Define an extended type that includes the dispatcher property
@@ -159,6 +159,11 @@ export const parseClaudeStream = (rawResponse: Response) => {
       const reader = rawResponse.body.getReader()
       let buffer = ''
 
+      let isThinking = false;
+      let thinkCheck = false;
+      let thinkingDone = false;
+      let thinkingBuffer = '';
+
       while (true) {
         try {
           const { done, value } = await reader.read()
@@ -171,7 +176,9 @@ export const parseClaudeStream = (rawResponse: Response) => {
           }
 
           const chunk = decoder.decode(value, { stream: true })
-          buffer += chunk
+          buffer += chunk;
+
+          let toolExecution = false;
 
           const lines = buffer.split('\n')
           buffer = lines.pop() || ''
@@ -182,8 +189,83 @@ export const parseClaudeStream = (rawResponse: Response) => {
               if (data) {
                 try {
                   const eventData = JSON.parse(data)
-                  if (eventData.type === 'content_block_delta' && eventData.delta.type === 'text_delta') {
-                    controller.enqueue(encoder.encode(eventData.delta.text))
+                  //console.log("eventData", eventData)
+                  if (eventData.type === 'content_block_start'
+                  &&  eventData.content_block?.type === 'tool_use'
+                  ) {// Claude wants to execute a tool
+                    const tool = eventData.content_block.name;
+                    const toolCallId = eventData.content_block.tool_call_id;
+                    const toolParams = eventData.content_block.parameters;
+
+                    console.log(`Executing Tool: ${tool}`);
+
+                    // Execute the tool using the API
+                    
+                    // To Do
+                    
+                    toolExecution = true;
+                  }
+
+
+                  if (!toolExecution && eventData.type === 'content_block_delta' && eventData.delta.type === 'text_delta') {
+                    //controller.enqueue(encoder.encode(eventData.delta.text))
+                    //console.log('eventData.delta.text ['+eventData.delta.text+"]");
+                    
+                    // 1) Check if we suspect a '<thinking>' tag
+                    if (!thinkingDone && eventData.delta.text.startsWith('<')) {
+                      thinkCheck = true;
+                    }
+
+                    // 4) Only send the text if the AI is not thinking
+                    // Nor checking for AI thinking
+                    if (!thinkCheck && !isThinking) {
+                      controller.enqueue(encoder.encode(eventData.delta.text))
+                    }
+
+                    // 3) Check if the AI is done thinking
+                    if (isThinking) {
+                      thinkingBuffer += eventData.delta.text;
+                      if (thinkingBuffer.includes('</thinking>')) {
+                        // The AI is done thinking
+                        isThinking = false;
+                        thinkingDone = true;
+                        console.log("AI is done thinking:\n"+thinkingBuffer);
+
+                        // Remove EVERYTHING inside thinkingBuffer, except for the text after '</thinking>'
+                        thinkingBuffer = thinkingBuffer.substring(thinkingBuffer.indexOf('</thinking>') + '</thinking>'.length);
+                        controller.enqueue(encoder.encode(thinkingBuffer+"Processing command"));
+                        
+                        thinkingBuffer = '';
+                      }
+                    }
+
+                    // 2) Check if the AI is thinking
+                    if (!thinkingDone && thinkCheck) {
+                      thinkingBuffer += eventData.delta.text;
+
+                      // First, compare thinkingBuffer to each letter of '<thinking>'
+                      // If the letter is the same, continue
+                      for (let i = 0; i < thinkingBuffer.length; i++) {
+                        if (i < '<thinking>'.length
+                        && thinkingBuffer.charAt(i) !== '<thinking>'.charAt(i)) {
+                          // The AI was not thinking, oops!
+                          thinkCheck = false;
+                          isThinking = false;
+                          controller.enqueue(encoder.encode(thinkingBuffer));
+                          thinkingBuffer = '';
+                          break;
+                        }
+                      }
+
+                      if (thinkCheck && thinkingBuffer.startsWith('<thinking>')) {
+                        // The AI is thinking
+                        isThinking = true;
+                        thinkCheck = false;
+                        console.log("AI is thinking");
+                      }
+                    }
+                    
+
                   }
                 } catch (e) {
                   console.error('Error parsing JSON:', e)
