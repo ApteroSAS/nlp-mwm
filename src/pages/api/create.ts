@@ -30,6 +30,12 @@ export const post: APIRoute = async(context) => {
  */
 export async function createOrRetrieveThread(threadId: string, model: string, systemPrompt: string, useTool: boolean, id: string): Promise<string> {
   const isClaudeModel = model.startsWith('claude')
+
+  if (isClaudeModel) {
+    const assistant = await createClaude("", model, systemPrompt, useTool)
+    return assistant.id
+  }
+
   let thread
   try {
     thread = await openai.beta.threads.retrieve(threadId)
@@ -39,11 +45,8 @@ export async function createOrRetrieveThread(threadId: string, model: string, sy
   if (!thread) {
     thread = await openai.beta.threads.create()
   }
-
-  if (isClaudeModel) {
-    const assistant = await createClaude(thread.id, model, systemPrompt, useTool)
-    return assistant.id
-  }
+  
+  
 
   // OpenAI assistant
   const assistant = await createAssistant(thread.id, model, systemPrompt, useTool, id)
