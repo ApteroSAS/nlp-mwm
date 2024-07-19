@@ -4,6 +4,7 @@ import { generateSignature } from '@/utils/auth'
 import { accumulateOrGetValue } from '@/aptero/api/Accumulator'
 import { FrontEndCommandAPI } from '@/aptero/api/FrontEndCommandAPI'
 import { externalTrigger } from '@/aptero/api/ExternalTrigger'
+import { Nlp, events } from '@/components/Nlp'
 import IconClear from './icons/Clear'
 import MessageItem from './MessageItem'
 import IconReport from './icons/Report'
@@ -16,7 +17,7 @@ const frontEndCommandAPI = new FrontEndCommandAPI()
 export default () => {
   let inputRef: HTMLTextAreaElement
 
-  const [currentSystemRoleSettings, setCurrentSystemRoleSettings] = createSignal('')
+  const [currentSystemRoleSettings, setCurrentSystemRoleSettings] = createSignal('한국어만 말해요')
 
   const [systemRoleEditing] = createSignal(false)
   const [messageList, setMessageList] = createSignal<ChatMessage[]>([])
@@ -174,6 +175,8 @@ export default () => {
         })
       }
       const timestamp = Date.now()
+      events.emit('inputText', requestMessageList?.[requestMessageList.length - 1]?.content || '')
+
       const response = await fetch('./api/generate', {
         method: 'POST',
         body: JSON.stringify({
@@ -336,7 +339,9 @@ export default () => {
   }
 
   return (
-    <div class="chatSpace" >
+    <div class="chatSpace">
+      <Nlp />
+
       {/*
       <SystemRoleSettings
         canEdit={() => messageList().length === 0}
@@ -362,7 +367,7 @@ export default () => {
             role={message().role}
             message={message().content}
             showRetry={() => ((message().role === 'assistant' && index === messageList().length - 1)
-                || (message().role === 'user' && index === messageList().length - 1 && !loading()))}// also retry if the last message is user message the AI is not working on it.
+                      || (message().role === 'user' && index === messageList().length - 1 && !loading()))}// also retry if the last message is user message the AI is not working on it.
             onRetry={retryLastFetch}
           />
         )}
@@ -373,13 +378,13 @@ export default () => {
           message={currentAssistantMessage}
         />
       )}
-      { currentError() && <ErrorMessageItem data={currentError()} onRetry={retryLastFetch} /> }
+      {currentError() && <ErrorMessageItem data={currentError()} onRetry={retryLastFetch} />}
       <Show
         when={!loading()}
         fallback={() => (
           <div class="gen-cb-wrapper">
-            <span>AI is thinking...</span>
-            <div class="gen-cb-stop" onClick={stopStreamFetch}>Stop</div>
+            <span>AI가 생각 중입니다...</span>
+            <div class="gen-cb-stop" onClick={stopStreamFetch}>중지</div>
           </div>
         )}
       >
@@ -389,7 +394,7 @@ export default () => {
               ref={inputRef!}
               disabled={systemRoleEditing()}
               onKeyDown={handleKeydown}
-              placeholder="Enter something..."
+              placeholder="무엇인가 입력하세요..."
               autocomplete="off"
               autofocus
               onInput={() => {
@@ -408,13 +413,7 @@ export default () => {
               }}
             >
               <button onClick={handleButtonClick} disabled={systemRoleEditing()} gen-slate-btn>
-                Send
-              </button>
-              <button title="Clear" onClick={clear} disabled={systemRoleEditing()} gen-slate-btn>
-                <IconClear />
-              </button>
-              <button title="Report" onClick={report} disabled={systemRoleEditing()} gen-slate-btn>
-                <IconReport />
+                보내다
               </button>
               <div
                 class="rounded-md hover:bg-slate/10 w-fit h-fit transition-colors active:scale-90"
@@ -428,9 +427,6 @@ export default () => {
           </div>
         </div>
       </Show>
-      <div class="sub-footer" style="opacity: 0.6; text-align: center;">
-        You can report any inappropriate content using the report button
-      </div>
 
     </div>
   )

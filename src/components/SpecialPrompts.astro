@@ -46,7 +46,6 @@ if (isSticky === 'true')
 if (customImg)
 {
   //console.log(document.getElementById('customImg'))
-  document.getElementById('Calque_1').style.display = 'none';
   document.getElementById('customImg').style.display = 'inline';
   document.getElementById('customImg').style.visibility = 'visible';
   document.getElementById('customImg').style.backgroundImage = `url(${customImg})`;
@@ -56,12 +55,5 @@ if (customImg)
     document.getElementById('customImg').style.borderRadius = realval.toString()+"%";
   }
 }
-else
-{
-  document.getElementById('Calque_1').style.display = 'inline';
-  document.getElementById('Calque_1').style.textAlign = 'center';
-  document.getElementById('customImg').style.display = 'none';
-}
-
 
 </script>

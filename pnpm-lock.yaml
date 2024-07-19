@@ -32,6 +32,9 @@ importers:
       eslint:
         specifier: ^8.36.0
         version: 8.36.0
+      eventemitter3:
+        specifier: ^5.0.1
+        version: 5.0.1
       eventsource-parser:
         specifier: ^0.1.0
         version: 0.1.0
@@ -95,7 +98,7 @@ importers:
         version: 2.3.0
       unocss:
         specifier: ^0.50.1
-        version: 0.50.4(postcss@8.4.21)(rollup@3.19.1)(vite@4.1.4(@types/node@18.15.5)(terser@5.16.6))
+        version: 0.50.4(postcss@8.4.38)(rollup@3.19.1)(vite@4.1.4(@types/node@18.15.5)(terser@5.16.6))
       vite-plugin-pwa:
         specifier: ^0.14.1
         version: 0.14.5(vite@4.1.4(@types/node@18.15.5)(terser@5.16.6))(workbox-build@6.5.4(@types/babel__core@7.20.0))(workbox-window@6.5.4)
@@ -2223,6 +2226,9 @@ packages:
     resolution: {integrity: sha512-i/2XbnSz/uxRCU6+NdVJgKWDTM427+MqYbkQzD321DuCQJUqOuJKIA0IM2+W2xtYHdKOmZ4dR6fExsd4SXL+WQ==}
     engines: {node: '>=6'}
 
+  eventemitter3@5.0.1:
+    resolution: {integrity: sha512-GWkBvjiSZK87ELrYOSESUYeVIc9mvLLf/nXalMOS5dYrgZq9o5OVkbZAVM06CVxYsCwH9BDZFPlQTlPA1j4ahA==}
+
   events@3.3.0:
     resolution: {integrity: sha512-mQw+2fkQbALzQ7V0MY0IqdnXNOeTtP4r0lN9z7AAawCXgqea7bDii20AYrIBrFd/Hx0M2Ocz6S111CaFkUcb0Q==}
     engines: {node: '>=0.8.x'}
@@ -3157,6 +3163,11 @@ packages:
     engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
     hasBin: true
 
+  nanoid@3.3.7:
+    resolution: {integrity: sha512-eSRppjcPIatRIMC1U6UngP8XFcz8MQWGQdt1MTBQ7NaAmvXDfvNxbvWV3x2y6CdEUciCSsDHDQZbhYaB8QEo2g==}
+    engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
+    hasBin: true
+
   natural-compare-lite@1.4.0:
     resolution: {integrity: sha512-Tj+HTDSJJKaZnfiuw+iaF9skdPpTo2GtEly5JHnWV/hfv2Qj/9RKsGISQtLh2ox3l5EAGw487hnBee0sIJ6v2g==}
 
@@ -3377,6 +3388,10 @@ packages:
 
   postcss@8.4.21:
     resolution: {integrity: sha512-tP7u/Sn/dVxK2NnruI4H9BG+x+Wxz6oeZ1cJ8P6G/PZY0IKk4k/63TDsQf2kQq3+qoJeLm2kIBUNlZe3zgb4Zg==}
+    engines: {node: ^10 || ^12 || >=14}
+
+  postcss@8.4.38:
+    resolution: {integrity: sha512-Wglpdk03BSfXkHoQa3b/oulrotAkwrlLDRSOb9D0bN86FdRyE9lppSp33aHNPgBa0JKCoB+drFLZkQoRRYae5A==}
     engines: {node: ^10 || ^12 || >=14}
 
   preferred-pm@3.0.3:
@@ -3674,6 +3689,10 @@ packages:
 
   source-map-js@1.0.2:
     resolution: {integrity: sha512-R0XvVJ9WusLiqTCEiGCmICCMplcCkIwwR11mOSD9CR5u+IXYdiseeEuXCVAjS54zqwkLcPNnmU4OeJ6tUrWhDw==}
+    engines: {node: '>=0.10.0'}
+
+  source-map-js@1.2.0:
+    resolution: {integrity: sha512-itJW8lvSA0TXEphiRoawsCksnlf8SyvmFzIhltqAHluXd88pkCd+cXJVHTDwdCr0IzwptSm035IHQktUu1QUMg==}
     engines: {node: '>=0.10.0'}
 
   source-map-support@0.5.21:
@@ -5649,14 +5668,14 @@ snapshots:
       gzip-size: 6.0.0
       sirv: 2.0.2
 
-  '@unocss/postcss@0.50.4(postcss@8.4.21)':
+  '@unocss/postcss@0.50.4(postcss@8.4.38)':
     dependencies:
       '@unocss/config': 0.50.4
       '@unocss/core': 0.50.4
       css-tree: 2.3.1
       fast-glob: 3.2.12
       magic-string: 0.30.0
-      postcss: 8.4.21
+      postcss: 8.4.38
 
   '@unocss/preset-attributify@0.50.4':
     dependencies:
@@ -6863,6 +6882,8 @@ snapshots:
 
   event-target-shim@5.0.1: {}
 
+  eventemitter3@5.0.1: {}
+
   events@3.3.0: {}
 
   eventsource-parser@0.1.0: {}
@@ -7976,6 +7997,8 @@ snapshots:
 
   nanoid@3.3.4: {}
 
+  nanoid@3.3.7: {}
+
   natural-compare-lite@1.4.0: {}
 
   natural-compare@1.4.0: {}
@@ -8217,6 +8240,12 @@ snapshots:
       nanoid: 3.3.4
       picocolors: 1.0.0
       source-map-js: 1.0.2
+
+  postcss@8.4.38:
+    dependencies:
+      nanoid: 3.3.7
+      picocolors: 1.0.0
+      source-map-js: 1.2.0
 
   preferred-pm@3.0.3:
     dependencies:
@@ -8573,6 +8602,8 @@ snapshots:
 
   source-map-js@1.0.2: {}
 
+  source-map-js@1.2.0: {}
+
   source-map-support@0.5.21:
     dependencies:
       buffer-from: 1.1.2
@@ -8912,12 +8943,12 @@ snapshots:
 
   universalify@2.0.0: {}
 
-  unocss@0.50.4(postcss@8.4.21)(rollup@3.19.1)(vite@4.1.4(@types/node@18.15.5)(terser@5.16.6)):
+  unocss@0.50.4(postcss@8.4.38)(rollup@3.19.1)(vite@4.1.4(@types/node@18.15.5)(terser@5.16.6)):
     dependencies:
       '@unocss/astro': 0.50.4(rollup@3.19.1)(vite@4.1.4(@types/node@18.15.5)(terser@5.16.6))
       '@unocss/cli': 0.50.4(rollup@3.19.1)
       '@unocss/core': 0.50.4
-      '@unocss/postcss': 0.50.4(postcss@8.4.21)
+      '@unocss/postcss': 0.50.4(postcss@8.4.38)
       '@unocss/preset-attributify': 0.50.4
       '@unocss/preset-icons': 0.50.4
       '@unocss/preset-mini': 0.50.4

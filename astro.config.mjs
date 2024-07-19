@@ -70,5 +70,5 @@ export default defineConfig({
     ],
   },
   site:"https://meet.aptero.co",
-  base:'/service/chatgpt/'
+  base:'/'
 })

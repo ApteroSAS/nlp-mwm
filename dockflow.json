@@ -1,5 +1,5 @@
 {
-    "image" : "aptero-chatgpt-demo",
+    "image" : "nlp-ui-nwm",
     "registry" : "rg.fr-par.scw.cloud/aptero",
     "version": "0.1.7"
 }

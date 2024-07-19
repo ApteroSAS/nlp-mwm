@@ -8,7 +8,7 @@ let customGreetings = '<span class="gpt-title" style="margin-right: 0px;">';
 if (urlParams.get('customGreetings'))
 {customGreetings += urlParams.get('customGreetings');}
 else
-{customGreetings += "Hello ! I'm [Aptero]'s AI";}
+{customGreetings += "안녕하세요! 저는 [MWN] 의 AI입니다";}
 
 
 //Force color if a custom color is set
@@ -30,8 +30,6 @@ document.getElementById('customGreetings').innerHTML = cc_c;
 
 if (urlParams.get('customDescription'))
 {document.getElementById('customDescription').innerHTML = urlParams.get('customDescription');}
-else
-{document.getElementById('customDescription').remove();}
 
 
 </script>

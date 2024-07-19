@@ -97,7 +97,7 @@ const { title } = Astro.props;
   main {
     max-width: 70ch;
     margin: 0 auto;
-    padding: 6rem 2rem 0rem;
+    padding: 8rem 2rem 0rem;
     min-height: 100vh;
     display: flex;
     flex-direction: column;
@@ -139,6 +139,7 @@ const initTheme = () => {
   } else {
     document.documentElement.classList.toggle('dark', darkSchema)
   }
+  document.documentElement.classList.toggle('dark', true) //force dark mode
 }
 
 initTheme()

@@ -18,6 +18,7 @@ module.exports = {
       },
       rules: {
         'no-mixed-spaces-and-tabs': ['warn', 'smart-tabs'],
+        'react/jsx-key': 'off',
       },
     },
     {
