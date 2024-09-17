@@ -1,6 +1,5 @@
 import EventEmitter from 'eventemitter3'
 import { createSignal, onMount } from 'solid-js'
-import { Paper } from '@/components/Paper'
 import { getEmoji } from '@/components/GetEmoji'
 import { InfoButton } from '@/components/InfoButton'
 import type { Component } from 'solid-js'
@@ -9,17 +8,26 @@ import type { Emotions } from '@/components/Emotions'
 // Global event bus
 export const events = new EventEmitter()
 
-// NLP API endpoint
-const API_URL = 'https://nlp.aptero.co/backend/nlp'
-
 export const EmotionDisplay: Component<{
   emotions: Emotions
 }> = (props) => {
   const emojiSize = (percentage: number): string => {
-    const alpha = 2
-    const size = Math.max(15, Math.min(50, percentage * alpha * 100))
-    return `${size}px`
+    const start = 35
+    const end = 80
+    const minPercentage = 0.04
+    const maxPercentage = 0.5
+    let size: number
+    if (percentage < minPercentage) {
+      size = start
+    } else if (percentage > maxPercentage) {
+      size = end
+    } else {
+      // Scale between 30px and 80px linearly from 0.1 to 0.7
+      size = start + (percentage - minPercentage) * (end - start) / (maxPercentage - minPercentage)
+    }
+    return `${Math.round(size)}px`
   }
+
   return (
     <div
       style={{
@@ -79,13 +87,18 @@ export const Nlp = () => {
   onMount(() => {
     const handleEvent = async(text) => {
       // Placeholder for API call
-      const response = await fetch(`${API_URL}/predict?text=${text}`)
+      const response = await fetch('./api/nlp_predict', {
+        method: 'POST',
+        body: JSON.stringify({
+          text,
+        }),
+      })
       const data = await response.json()
       console.log(data)
       // weight adjustment
-      // data.neutral = data.neutral / 3
+      // data.neutral = data.neutral / 11
       // neutralize the neutral
-      data.neutral = 0
+      // data.neutral = 0
       setLastEmotions(data)
       setMessageNumber(messageNumber() + 1)
       setAccumulatedEmotions({
@@ -106,9 +119,17 @@ export const Nlp = () => {
   })
 
   return (
-    <Paper>
-      감정 분석 (Emotion Analysis) <InfoButton />
-      <EmotionDisplay emotions={lastEmotions()} />
-    </Paper>
+    <div
+      style="
+      color:black;
+      background: rgb(255 255 255 / 96%);
+      position: fixed; top: 0; left: 0; right: 0;
+      z-index: 1000; padding: 0; display: flex; align-items: center; justify-content: center;"
+    >
+      <div>
+        감정 분석 (Emotion Analysis) <InfoButton />
+        <EmotionDisplay emotions={lastEmotions()} />
+      </div>
+    </div>
   )
 }
